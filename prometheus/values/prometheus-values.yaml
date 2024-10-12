@@ -1,0 +1,9 @@
+prometheus-node-exporter:
+  enabled: true
+  nodeSelector:
+    node-type: infra
+
+kube-state-metrics:
+  enabled: true
+  nodeSelector:
+    node-type: infra
