@@ -97,3 +97,7 @@
     rate(container_cpu_cfs_throttled_seconds_total[5m])
 2. Dashboard完整圖
   ![cpu-throttle.png](./image/cpu-throttle.png)
+
+
+### 第七題
+  ![Architecture](./image/Architecture.png)
