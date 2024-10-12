@@ -41,3 +41,59 @@
    ```bash
     kubectl get nodes -o custom-columns='NAME:.metadata.name,NODE_TYPE:.metadata.labels.node-type'
     kubectl get pods -n default -o wide
+
+### 第五題
+1. 安裝grafana
+   ```bash
+    docker pull grafana/grafana
+2. 運行grafana並指定port以讓我們訪問Grafana UI
+   ```bash
+    docker run -d --name=grafana -p 3000:3000 grafana/grafana
+3. 登入後，要將Prometheus加入到data source中。但因為metalLB沒有安裝成功，Prometheus並沒有辦法透過metalLB存取，故要先把port forward出來讓Grafana能夠存取Prometheus。
+   ```bash
+    kubectl port-forward svc/prometheus-server 9090:80
+4. 將Prometheus加入到data source中
+  ![add-datasource](./image/add-datasource.png)
+#### 五之一
+1. 加入以下query。此用意是在監測Node CPU 使用率
+   ```promQL
+    sum(rate(node_cpu_seconds_total[5m])) by (node)
+2. 加入以下query。此用意是在監測內存使用率
+   ```promQL
+    ((sum(node_memory_MemTotal_bytes) - sum(node_memory_MemAvailable_bytes)) / sum(node_memory_MemTotal_bytes)) * 100
+3. 加入以下query。此用意是在監測磁碟使用率
+   ```promQL
+    (sum(node_filesystem_size_bytes) - sum(node_filesystem_avail_bytes)) / sum(node_filesystem_size_bytes) * 100
+4. Dashboard完整圖
+  ![node-dashboard](./image/node-dashboard.png)
+
+#### 五之二
+1. 加入以下query。此用意是在監測每個namespace的pod是否都在完全運行中
+   ```promQL
+    (sum(kube_pod_status_ready) by (namespace) / count(kube_pod_info) by (namespace)) * 100
+2. 加入以下query。此用意是在監測當前node數量為多少(因為通常會搭配auto scaling來擴展node數量，故加上這個)
+   ```promQL
+    count(kube_node_info)
+3. Dashboard完整圖
+  ![cluster-dashboard](./image/cluster-dashboard.png)
+
+#### 五之五
+1. 加入以下query。此用意是在監測query的延遲
+   ```promQL
+    sum(increase(prometheus_engine_query_duration_seconds[5m]))
+2. 加入以下query。此用意是在監測啟用中的Series數量，因為這個會影響內存。直接看內存使用率是最好的
+   ```promQL
+    prometheus_tsdb_head_series
+3. 加入以下query。此用意是在監測HTTP Status Code數量，看是否有異常
+    sum(prometheus_http_requests_total) by (code)
+
+
+#### 五之六
+在以上就已經說明
+
+#### 五之七
+1. 可以增加以下panel。主要是顯示container需要多少額外的 CPU 核心才能在沒有CPU限制的情況下運作。
+   ```promQL
+    rate(container_cpu_cfs_throttled_seconds_total[5m])
+2. Dashboard完整圖
+  ![cpu-throttle.png](./image/cpu-throttle.png)
