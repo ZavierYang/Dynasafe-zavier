@@ -29,3 +29,15 @@
 7. 關於只部署在infra node上，因為不熟悉從manifast部署怎麼會入設定檔，故改用準備[patch file](./metallb/metallb-patch.yaml)後執行apply進行套用
    ```bash
     kubectl patch daemonset speaker -n metallb-system --patch-file ./metallb/metallb-patch.yaml
+
+### 第四題
+1. 因為沒有從0建置Prometheus的經驗，所以安裝Prometheus是用helm已經包裝好的版本進行安裝。安裝前因為需要把特定pod建立在某個node，所以要寫[values.yaml](./prometheus/values/prometheus-values.yaml)進行設定
+2. 執行以下進行helm安裝並套用values的設定
+   ```bash
+    helm install prometheus prometheus-community/prometheus -f prometheus/values/prometheus-values.yaml
+3. 安裝完後可以執行下可以確定只能部署在infra上面的pod是否只有在infra node上
+  ![node label](./image/node-label.png)
+  ![Prometheus installation](./image/prometheus-installation.png)
+   ```bash
+    kubectl get nodes -o custom-columns='NAME:.metadata.name,NODE_TYPE:.metadata.labels.node-type'
+    kubectl get pods -n default -o wide
