@@ -9,3 +9,23 @@
   ![啟用圖](./image/create-cluster.png)
    ```bash
     kind create cluster --config ./kubernetes/cluster-config.yaml
+
+### 第三題 (沒有完成)
+1. 因為不熟悉metalLB，故安裝時使用[官方文檔](https://metallb.universe.tf/installation/)的方式進行操作。
+2. 執行以下進行安裝
+   ```bash
+    kubectl apply -f https://raw.githubusercontent.com/metallb/metallb/v0.14.8/config/manifests/metallb-native.yaml
+3. 執行以下抓取internal ip 來設置L2設定所需要的ip pool range
+   ```bash
+    kubectl get nodes -o wide
+4. 建立[IPAddressPool](./metallb/IPAddressPool.yaml)後執行apply進行套用
+   ```bash
+    kubectl apply -f ./metallb/IPAddressPool.yaml
+5. 建立[L2Advertisement](./metallb/L2Advertisement.yaml)後執行apply進行套用
+   ```bash
+    kubectl apply -f ./metallb/L2Advertisement.yaml
+6. 雖然都有部署成功，有嘗試用nginx進行嘗試，或是用prometheus service改為LoadBalancer進行嘗試，但都無法成功用external ip進行連線
+  ![pod狀態圖](./image/metalLB.png)
+7. 關於只部署在infra node上，因為不熟悉從manifast部署怎麼會入設定檔，故改用準備[patch file](./metallb/metallb-patch.yaml)後執行apply進行套用
+   ```bash
+    kubectl patch daemonset speaker -n metallb-system --patch-file ./metallb/metallb-patch.yaml
