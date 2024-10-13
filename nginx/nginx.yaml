@@ -1,0 +1,36 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: my-app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: my-app
+  template:
+    metadata:
+      labels:
+        app: my-app
+    spec:
+      containers:
+      - name: my-app
+        image: nginx:latest
+        resources:
+          requests:
+            cpu: "100m"
+          limits:
+            cpu: "500m"
+      nodeSelector:
+        node-type: application
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: my-app-service
+spec:
+  type: ClusterIP
+  selector:
+    app: my-app
+  ports:
+    - port: 80
+      targetPort: 80
