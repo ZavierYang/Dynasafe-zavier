@@ -99,5 +99,36 @@
   ![cpu-throttle.png](./image/cpu-throttle.png)
 
 
+### 第六題
+1. 因為K8S上還沒有k8s metrics server，因次要先安裝
+   ```bash
+    kubectl apply -f https://github.com/kubernetes-sigs/metrics-server/releases/latest/download/components.yaml
+2. 執行後發現server無法安裝起來，原因是無法驗證TLS，故先把TLS驗證取消。metrics server就會正常啟用。有用Lens的話也會看到pod metrics開始正常顯示
+  ![metrics-server-status](./image/metrics-server-status.png)
+   ```yaml
+    args:
+    - --kubelet-insecure-tls
+3. 準備nginx相關的deployment以及server以進行壓測。[Code](./nginx/nginx.yaml)。之後apply
+   ```bash
+    kubectl apply -f nginx/nginx.yaml
+4. 創建[HPA](./nginx/hpa.yaml)，以根據CPU使用率進行application的自動擴展。之後apply
+   ```bash
+    kubectl apply -f nginx/hpa.yaml
+5. 在執行壓測前我們可以先確認deployment狀態是否在1個replica
+  ![before-stress-test-status](./image/before-stress-test-status.png)
+   ```bash
+    kubectl get deployment my-app
+6. 透過busybox做個簡單測試
+   ```bash
+    kubectl run -i --tty load-generator --image=busybox --restart=Never -- sh
+    /# while true; do wget -q -O- http://my-app-service; done
+7. 之後等一下，可以再確認一次replica數量或是hpa狀態，可以確認hpa有在正常運作，replica確實也有如預期增加
+  ![first-stress-deployment-status](./image/first-stress-deployment-status.png)
+  ![first-stress-hpa-status](./image/first-stress-hpa-status.png)
+8. 再開啟另一個busybox進行更多測試，又會看到replica又增加了
+  ![second-stress-all-status](./image/second-stress-all-status.png)
+9. 停止測試後過一段時間，再檢查一次狀態，replica就會返回初始數量了
+  ![end-stress-test-status](./image/end-stress-test-status.png)
+
 ### 第七題
   ![Architecture](./image/Architecture.png)
